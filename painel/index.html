@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Painel de Ofertas</title>
+</head>
+<body>
+   <h1>Gerador de Anúncios</h1>
+
+    <form id="formulario">
+        <label for="nome">Nome do produto</label>
+        <input type="text" id="nome" name="nome" required>
+
+        <label for="precoAtual">Preço atual</label>
+        <input type="number" id="precoAtual" name="precoAtual" step="0.01" required>
+
+        <label for="precoAntigo">Preço antigo</label>
+        <input type="number" id="precoAntigo" name="precoAntigo" step="0.01" required>
+
+        <label for="link">Link de afiliado</label>
+        <input type="url" id="link" name="link" required>
+
+        <label for="diferenciais">Diferenciais do produto (opcional)</label>
+        <textarea id="diferenciais" name="diferenciais" rows="4"></textarea>
+
+        <label for="imagens">Imagens do produto</label>
+        <input type="file" id="imagens" name="imagens" accept="image/*" multiple>
+
+        <div id="previa"></div>
+
+        <button type="submit">Gerar anúncio</button>
+    </form>
+
+    <div id="resultado"></div> 
+
+    <script>
+    const inputImagens = document.getElementById("imagens");
+    const previa = document.getElementById("previa");
+
+    inputImagens.addEventListener("change", () => {
+        previa.innerHTML = "";
+        for (const arquivo of inputImagens.files) {
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(arquivo);
+            img.alt = "Prévia da imagem do produto";
+            img.className = "previa-img";
+            previa.appendChild(img);
+        }
+    });
+</script>
+
+<script src="script.js"></script>
+
+</body>
+</html>
