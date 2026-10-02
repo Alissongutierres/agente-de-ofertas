@@ -1,57 +1,807 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Painel de Ofertas</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de Ofertas</title>
+
+  <!-- Fontes (precisam de internet; se falharem, o navegador usa as fontes de reserva) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =====================================================
+       1. CORES E FONTES (mude aqui para trocar o visual todo)
+       ===================================================== */
+    :root {
+      --tinta: #16213E;          /* azul-marinho: cabeçalho, bordas fortes, texto sobre amarelo */
+      --fundo: #EEF1F6;          /* fundo da página */
+      --superficie: #FFFFFF;     /* fundo dos painéis */
+      --linha: #D5DBE6;          /* linhas e bordas leves */
+      --texto: #1B2438;          /* texto principal */
+      --texto-suave: #59637A;    /* texto secundário */
+      --etiqueta: #FFC933;       /* amarelo "etiqueta de preço": cor de destaque */
+      --etiqueta-forte: #F2B300; /* amarelo mais escuro (hover do botão) */
+
+      --fonte-titulo: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+      --fonte-corpo: "Figtree", "Segoe UI", system-ui, sans-serif;
+    }
+
+    /* =====================================================
+       2. BASE
+       ===================================================== */
+    * { box-sizing: border-box; }
+
+    /* Garante que o atributo "hidden" do HTML sempre esconda o elemento */
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      background: var(--fundo);
+      color: var(--texto);
+      font-family: var(--fonte-corpo);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    h1, h2, h3 { font-family: var(--fonte-titulo); line-height: 1.15; margin: 0; }
+
+    /* Anel de foco visível para quem navega pelo teclado */
+    :focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; }
+
+    /* =====================================================
+       3. CABEÇALHO
+       ===================================================== */
+    .topo {
+      background: var(--tinta);
+      color: #fff;
+      padding: 18px 24px;
+    }
+    .topo-conteudo {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .topo h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; }
+    .topo p { margin: 0; color: #B9C3DA; font-size: 0.95rem; }
+
+    /* =====================================================
+       4. LAYOUT: formulário à esquerda, resultado à direita
+       ===================================================== */
+    .app {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      display: grid;
+      grid-template-columns: minmax(300px, 400px) 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* No celular e telas estreitas, vira uma coluna só */
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; }
+    }
+
+    /* =====================================================
+       5. FORMULÁRIO
+       ===================================================== */
+    .formulario {
+      background: var(--superficie);
+      border: 1px solid var(--linha);
+      border-radius: 12px;
+      padding: 8px 20px 20px;
+      position: sticky;      /* acompanha a rolagem em telas grandes */
+      top: 16px;
+    }
+    @media (max-width: 860px) { .formulario { position: static; } }
+
+    .grupo { padding: 16px 0; border-bottom: 1px solid var(--linha); }
+    .grupo:last-of-type { border-bottom: 0; }
+    .grupo h2 { font-size: 1.05rem; margin-bottom: 10px; }
+
+    label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin: 10px 0 4px;
+    }
+    .dica { font-weight: 400; color: var(--texto-suave); }
+
+    input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      font: inherit;
+      color: var(--texto);
+      background: #fff;
+      border: 1.5px solid var(--linha);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    input::placeholder, textarea::placeholder { color: #8A93A8; }
+    input:hover, textarea:hover { border-color: #AEB7CA; }
+    input:focus, textarea:focus { outline: 3px solid var(--etiqueta); outline-offset: 0; border-color: var(--tinta); }
+    textarea { resize: vertical; }
+
+    /* Dois campos lado a lado (os dois preços) */
+    .duas-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ----- Área de envio de fotos ----- */
+    .soltar {
+      display: block;
+      border: 2px dashed #AEB7CA;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--texto-suave);
+      margin: 0;
+    }
+    .soltar:hover { border-color: var(--tinta); background: #F7F9FC; }
+    .soltar:focus-within { outline: 3px solid var(--tinta); outline-offset: 2px; }
+    .soltar strong { color: var(--texto); }
+
+    /* O campo de arquivo real fica invisível, mas continua acessível pelo teclado */
+    .soltar input {
+      position: absolute;
+      width: 1px; height: 1px;
+      opacity: 0;
+      overflow: hidden;
+    }
+
+    .miniaturas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .miniaturas img {
+      width: 56px; height: 56px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--linha);
+    }
+    .nota-fotos { font-size: 0.85rem; color: var(--texto-suave); margin: 8px 0 0; }
+
+    /* ----- Botão principal: formato de etiqueta de preço ----- */
+    .btn-criar {
+      position: relative;
+      width: 100%;
+      margin-top: 8px;
+      padding: 17px 24px 17px 52px;
+      border: 0;
+      cursor: pointer;
+      background: var(--etiqueta);
+      color: var(--tinta);
+      font-family: var(--fonte-titulo);
+      font-weight: 800;
+      font-size: 1.1rem;
+      text-align: left;
+      /* recorte que cria a ponta da etiqueta do lado esquerdo */
+      clip-path: polygon(22px 0, 100% 0, 100% 100%, 22px 100%, 0 50%);
+      transition: background 0.15s;
+    }
+    /* o "furinho" da etiqueta */
+    .btn-criar::before {
+      content: "";
+      position: absolute;
+      left: 26px; top: 50%;
+      width: 10px; height: 10px;
+      margin-top: -5px;
+      border-radius: 50%;
+      background: var(--superficie);
+    }
+    .btn-criar:hover { background: var(--etiqueta-forte); }
+    /* o recorte cortaria o contorno comum, então o foco usa uma sombra interna */
+    .btn-criar:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--tinta); }
+    .btn-criar:disabled { opacity: 0.6; cursor: progress; }
+
+    .status {
+      min-height: 1.5em;
+      margin: 12px 0 0;
+      font-size: 0.92rem;
+      color: var(--texto-suave);
+    }
+
+    /* =====================================================
+       6. RESULTADO
+       ===================================================== */
+    .vazio {
+      border: 2px dashed var(--linha);
+      border-radius: 12px;
+      padding: 40px 28px;
+      color: var(--texto-suave);
+      max-width: 560px;
+    }
+    .vazio h2 { color: var(--texto); font-size: 1.3rem; margin-bottom: 10px; }
+    .vazio ul { margin: 12px 0 0; padding-left: 20px; }
+    .vazio li { margin: 4px 0; }
+
+    .resultado h2 { font-size: 1.15rem; margin-bottom: 10px; }
+
+    .bloco-texto { padding-bottom: 28px; border-bottom: 1px solid var(--linha); margin-bottom: 28px; }
+    .bloco-texto textarea {
+      font-size: 0.98rem;
+      line-height: 1.55;
+      background: var(--superficie);
+      max-width: 720px;
+    }
+
+    .acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+    .btn {
+      display: inline-block;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1.5px solid var(--tinta);
+      background: var(--superficie);
+      color: var(--tinta);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn:hover { background: var(--tinta); color: #fff; }
+    /* botão de destaque (as ações que você mais usa) */
+    .btn-forte { background: var(--tinta); color: #fff; }
+    .btn-forte:hover { background: var(--tinta-hover, #0E1730); }
+
+    /* Cartão e vídeo lado a lado */
+    .midia { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: start; }
+    @media (max-width: 1060px) { .midia { grid-template-columns: 1fr; } }
+
+    .cartao-canvas {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+      border-radius: 10px;
+      border: 1px solid var(--linha);
+    }
+
+    /* Moldura de celular para o vídeo vertical */
+    .celular {
+      width: 270px;
+      max-width: 100%;
+      aspect-ratio: 9 / 16;
+      background: #000;
+      border: 8px solid var(--tinta);
+      border-radius: 30px;
+      overflow: hidden;
+    }
+    .celular canvas, .celular video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Barra de progresso da gravação (10 segundos) */
+    .progresso {
+      width: 270px;
+      max-width: 100%;
+      height: 8px;
+      background: var(--linha);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    #barra { height: 100%; width: 0; background: var(--etiqueta-forte); }
+    .gravando { font-size: 0.88rem; color: var(--texto-suave); margin: 0 0 6px; }
+
+    /* Respeita quem prefere menos movimento */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
 </head>
 <body>
-   <h1>Gerador de Anúncios</h1>
 
-    <form id="formulario">
+  <!-- =====================================================
+       CABEÇALHO
+       ===================================================== -->
+  <header class="topo">
+    <div class="topo-conteudo">
+      <h1>Painel de ofertas</h1>
+      <p>Preencha o produto e gere texto, imagem e vídeo de uma vez.</p>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- =====================================================
+         COLUNA ESQUERDA: FORMULÁRIO
+         ===================================================== -->
+    <section class="formulario" aria-label="Dados do produto">
+
+      <div class="grupo">
+        <h2>Produto</h2>
         <label for="nome">Nome do produto</label>
-        <input type="text" id="nome" name="nome" required>
+        <input id="nome" type="text" placeholder="Ex: Fone Bluetooth XYZ">
 
-        <label for="precoAtual">Preço atual</label>
-        <input type="number" id="precoAtual" name="precoAtual" step="0.01" required>
+        <label for="descricao">Diferenciais <span class="dica">(um por linha)</span></label>
+        <textarea id="descricao" rows="4" placeholder="Bateria de 30 horas&#10;Cancelamento de ruído"></textarea>
+      </div>
 
-        <label for="precoAntigo">Preço antigo</label>
-        <input type="number" id="precoAntigo" name="precoAntigo" step="0.01" required>
+      <div class="grupo">
+        <h2>Preços</h2>
+        <div class="duas-colunas">
+          <div>
+            <label for="precoDe">Preço original</label>
+            <input id="precoDe" type="number" step="0.01" min="0" placeholder="199.90">
+          </div>
+          <div>
+            <label for="precoPor">Preço da oferta</label>
+            <input id="precoPor" type="number" step="0.01" min="0" placeholder="129.90">
+          </div>
+        </div>
+      </div>
 
+      <div class="grupo">
+        <h2>Link e fotos</h2>
         <label for="link">Link de afiliado</label>
-        <input type="url" id="link" name="link" required>
+        <input id="link" type="text" placeholder="https://...">
 
-        <label for="diferenciais">Diferenciais do produto (opcional)</label>
-        <textarea id="diferenciais" name="diferenciais" rows="4"></textarea>
+        <label for="fotos">Fotos do produto</label>
+        <label class="soltar" for="fotos">
+          <strong>Escolher fotos</strong><br>
+          Você pode selecionar várias de uma vez
+          <input id="fotos" type="file" accept="image/*" multiple>
+        </label>
+        <div class="miniaturas" id="miniaturas"></div>
+        <p class="nota-fotos" id="notaFotos" hidden>A primeira foto vai no cartão. Todas entram no vídeo.</p>
+      </div>
 
-        <label for="imagens">Imagens do produto</label>
-        <input type="file" id="imagens" name="imagens" accept="image/*" multiple>
+      <button id="criar" class="btn-criar">Criar anúncio</button>
+      <p id="aviso" class="status" role="status" aria-live="polite"></p>
+    </section>
 
-        <div id="previa"></div>
+    <!-- =====================================================
+         COLUNA DIREITA: RESULTADO
+         ===================================================== -->
+    <div>
 
-        <button type="submit">Gerar anúncio</button>
-    </form>
+      <!-- Aparece antes do primeiro clique -->
+      <div id="vazio" class="vazio">
+        <h2>Seu anúncio aparece aqui</h2>
+        <p>Preencha o formulário e clique em <strong>Criar anúncio</strong>. Você recebe:</p>
+        <ul>
+          <li>O texto pronto para copiar, com o link de afiliado</li>
+          <li>O cartão de oferta em imagem</li>
+          <li>Um vídeo de 10 segundos para baixar</li>
+        </ul>
+      </div>
 
-    <div id="resultado"></div> 
+      <!-- Aparece depois do clique -->
+      <section id="resultado" class="resultado" hidden>
 
-    <script>
-    const inputImagens = document.getElementById("imagens");
-    const previa = document.getElementById("previa");
+        <div class="bloco-texto">
+          <h2>Texto do anúncio</h2>
+          <textarea id="textoAnuncio" rows="11"></textarea>
+          <div class="acoes">
+            <button id="copiar" class="btn btn-forte">Copiar texto</button>
+            <button id="whats" class="btn">Abrir no WhatsApp</button>
+          </div>
+        </div>
 
-    inputImagens.addEventListener("change", () => {
-        previa.innerHTML = "";
-        for (const arquivo of inputImagens.files) {
-            const img = document.createElement("img");
-            img.src = URL.createObjectURL(arquivo);
-            img.alt = "Prévia da imagem do produto";
-            img.className = "previa-img";
-            previa.appendChild(img);
-        }
+        <div class="midia">
+
+          <div>
+            <h2>Cartão de oferta</h2>
+            <canvas id="cartao" class="cartao-canvas" width="540" height="540"></canvas>
+            <div class="acoes">
+              <button id="baixarCartao" class="btn">Baixar imagem</button>
+            </div>
+          </div>
+
+          <div>
+            <h2>Vídeo</h2>
+            <p class="gravando" id="textoGravando" hidden>Gravando, não feche esta aba...</p>
+            <div class="progresso" id="barraBox" hidden><div id="barra"></div></div>
+            <div class="celular">
+              <canvas id="tela" width="540" height="960"></canvas>
+              <video id="previa" controls hidden></video>
+            </div>
+            <div class="acoes">
+              <a id="baixarVideo" class="btn" hidden>Baixar vídeo</a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </main>
+
+<script>
+  // =====================================================
+  // 1. FERRAMENTAS PEQUENAS (usadas em vários lugares)
+  // =====================================================
+  const $ = (id) => document.getElementById(id);   // atalho para document.getElementById
+
+  // Formata número como dinheiro brasileiro: 129.9 -> "R$ 129,90"
+  const moeda = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // Lê um arquivo de imagem e devolve a imagem pronta (só termina quando carregou)
+  function carregarImagem(arquivo) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.src = URL.createObjectURL(arquivo);
     });
-</script>
+  }
 
-<script src="script.js"></script>
+  // Quebra um texto em várias linhas para caber numa largura (precisa da fonte já definida)
+  function quebrarTexto(ctx, texto, larguraMax) {
+    const palavras = texto.split(" ");
+    const linhas = [];
+    let atual = "";
+    for (const palavra of palavras) {
+      const teste = atual ? atual + " " + palavra : palavra;
+      if (ctx.measureText(teste).width > larguraMax && atual) {
+        linhas.push(atual);   // a linha encheu: guarda e começa outra
+        atual = palavra;
+      } else {
+        atual = teste;
+      }
+    }
+    if (atual) linhas.push(atual);
+    return linhas;
+  }
+
+  // Desenha a imagem INTEIRA dentro de uma caixa, centralizada, sem cortar o produto
+  function desenharContain(ctx, img, bx, by, bw, bh, zoom = 1) {
+    const escala = Math.min(bw / img.naturalWidth, bh / img.naturalHeight) * zoom;
+    const w = img.naturalWidth * escala;
+    const h = img.naturalHeight * escala;
+    ctx.drawImage(img, bx + (bw - w) / 2, by + (bh - h) / 2, w, h);
+  }
+
+  // Devolve 0 -> 1 conforme o tempo passa entre "inicio" e "inicio + duracao" (para animações)
+  const aparecer = (t, inicio, duracao) => Math.max(0, Math.min(1, (t - inicio) / duracao));
+
+  // =====================================================
+  // 2. TEMAS DE COR E MODELOS DE TEXTO (sorteados sem repetir)
+  // =====================================================
+  const TEMAS = [
+    { fundo: "#1b1b2f", destaque: "#ff4d4d", texto: "#ffffff", preco: "#ffd43b" },
+    { fundo: "#0b3d2e", destaque: "#2ecc71", texto: "#ffffff", preco: "#ffe066" },
+    { fundo: "#2d1b4e", destaque: "#ff9f1c", texto: "#ffffff", preco: "#ffd43b" },
+    { fundo: "#0f2a4a", destaque: "#ffcf33", texto: "#ffffff", preco: "#7CFC9A" }
+  ];
+
+  // Cada modelo é uma função que recebe os dados e devolve o texto pronto.
+  // Pode acrescentar os seus modelos aqui, seguindo o mesmo formato.
+  const MODELOS = [
+    (d) => `🔥 OFERTA IMPERDÍVEL 🔥\n\n${d.nome}\n\n${d.linhaPreco}\n\n${d.descricao}\n\n${d.linhaLink}`,
+    (d) => `⚡ ACHADO DO DIA ⚡\n\n${d.nome}\n${d.linhaPreco}\n\n${d.descricao}\n\n${d.linhaLink}\n\nCorre que o estoque pode acabar!`,
+    (d) => `🚨 PROMOÇÃO RELÂMPAGO 🚨\n\n${d.nome}\n\n${d.descricao}\n\n${d.linhaPreco}\n\n${d.linhaLink}`,
+    (d) => `🛒 Olha o que eu encontrei:\n\n${d.nome}\n${d.linhaPreco}\n\n${d.descricao}\n\n${d.linhaLink}`
+  ];
+
+  // Guardam o último sorteado, para não repetir em seguida
+  let ultimoModelo = -1;
+  let ultimoTema = -1;
+
+  // Sorteia um número de 0 a (tamanho-1) diferente do anterior
+  function sortearDiferente(tamanho, anterior) {
+    let n;
+    do { n = Math.floor(Math.random() * tamanho); } while (n === anterior && tamanho > 1);
+    return n;
+  }
+
+  // =====================================================
+  // 3. CARTÃO DE OFERTA (imagem)
+  // =====================================================
+  function desenharCartao(d, foto, tema) {
+    const ctx = $("cartao").getContext("2d");
+
+    ctx.fillStyle = tema.fundo;
+    ctx.fillRect(0, 0, 540, 540);
+
+    // Faixa de cima
+    ctx.fillStyle = tema.destaque;
+    ctx.fillRect(0, 0, 540, 60);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 30px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("🔥 OFERTA IMPERDÍVEL", 270, 41);
+
+    // Caixa branca com a foto
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(20, 75, 500, 270);
+    desenharContain(ctx, foto, 20, 75, 500, 270);
+
+    // Selo de desconto
+    if (d.desconto) {
+      ctx.fillStyle = tema.destaque;
+      ctx.beginPath();
+      ctx.arc(470, 120, 42, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 28px Arial";
+      ctx.fillText("-" + d.desconto + "%", 470, 130);
+    }
+
+    // Nome (até 2 linhas)
+    ctx.fillStyle = tema.texto;
+    ctx.font = "bold 28px Arial";
+    quebrarTexto(ctx, d.nome, 500).slice(0, 2).forEach((linha, i) => {
+      ctx.fillText(linha, 270, 385 + i * 34);
+    });
+
+    // Preço original riscado
+    if (d.precoDe) {
+      ctx.fillStyle = "#bbb";
+      ctx.font = "24px Arial";
+      const textoDe = "De " + moeda(d.precoDe);
+      ctx.fillText(textoDe, 270, 465);
+      const meia = ctx.measureText(textoDe).width / 2;
+      ctx.strokeStyle = "#bbb";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(270 - meia, 458);
+      ctx.lineTo(270 + meia, 458);
+      ctx.stroke();
+    }
+
+    // Preço da oferta
+    ctx.fillStyle = tema.preco;
+    ctx.font = "bold 52px Arial";
+    ctx.fillText("Por " + moeda(d.precoPor), 270, 520);
+  }
+
+  // =====================================================
+  // 4. VÍDEO: DESENHA UM QUADRO PARA O TEMPO "t" (em ms)
+  // =====================================================
+  const DURACAO = 10000;   // 10 segundos no total
+  const FASE_FOTOS = 7500; // as fotos passam nos primeiros 7,5 s; no fim entra o "Link no grupo!"
+
+  function desenharQuadroVideo(ctx, d, fotos, tema, t) {
+    ctx.textAlign = "center";
+
+    // Fundo
+    ctx.fillStyle = tema.fundo;
+    ctx.fillRect(0, 0, 540, 960);
+
+    // --- Fotos com zoom e transição suave ---
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(30, 110, 480, 500);
+
+    ctx.save();                                   // guarda o estado para poder desfazer o recorte
+    ctx.beginPath();
+    ctx.rect(30, 110, 480, 500);
+    ctx.clip();                                   // tudo que for desenhado fica dentro da caixa
+
+    const tempoFotos = Math.min(t, FASE_FOTOS - 1);
+    const porFoto = FASE_FOTOS / fotos.length;    // quanto tempo cada foto fica
+    const i = Math.floor(tempoFotos / porFoto);   // qual foto está na vez
+    const tNaFoto = tempoFotos - i * porFoto;     // quanto tempo a foto atual já ficou
+    const zoom = 1 + 0.12 * (tNaFoto / porFoto);  // zoom de 100% a 112%
+
+    if (i > 0) desenharContain(ctx, fotos[i - 1], 30, 110, 480, 500, 1.12); // foto anterior por baixo
+    ctx.globalAlpha = i === 0 ? 1 : Math.min(1, tNaFoto / 400);              // foto nova entra aos poucos
+    desenharContain(ctx, fotos[i], 30, 110, 480, 500, zoom);
+    ctx.restore();                                // desfaz o recorte e a transparência
+
+    // --- Faixa de cima ---
+    ctx.globalAlpha = aparecer(t, 0, 500);
+    ctx.fillStyle = tema.destaque;
+    ctx.fillRect(0, 25, 540, 60);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 32px Arial";
+    ctx.fillText("🔥 OFERTA IMPERDÍVEL", 270, 66);
+    ctx.globalAlpha = 1;
+
+    // --- Selo de desconto (aparece crescendo) ---
+    if (d.desconto && t > 2500) {
+      const raio = 48 * aparecer(t, 2500, 300);
+      ctx.fillStyle = tema.destaque;
+      ctx.beginPath();
+      ctx.arc(455, 160, raio, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold " + Math.round(30 * aparecer(t, 2500, 300)) + "px Arial";
+      ctx.fillText("-" + d.desconto + "%", 455, 170);
+    }
+
+    // --- Nome do produto ---
+    ctx.globalAlpha = aparecer(t, 300, 500);
+    ctx.fillStyle = tema.texto;
+    ctx.font = "bold 34px Arial";
+    const linhasNome = quebrarTexto(ctx, d.nome, 490).slice(0, 2);
+    linhasNome.forEach((linha, k) => ctx.fillText(linha, 270, 665 + k * 40));
+
+    // --- Primeira linha da descrição ---
+    ctx.globalAlpha = aparecer(t, 1500, 500);
+    ctx.fillStyle = "#ddd";
+    ctx.font = "24px Arial";
+    const yDesc = 665 + linhasNome.length * 40 + 5;
+    quebrarTexto(ctx, d.primeiroDiferencial, 490).slice(0, 2)
+      .forEach((linha, k) => ctx.fillText(linha, 270, yDesc + k * 28));
+    ctx.globalAlpha = 1;
+
+    // --- Preço original riscado ---
+    if (d.precoDe && t > 3000) {
+      ctx.globalAlpha = aparecer(t, 3000, 400);
+      ctx.fillStyle = "#bbb";
+      ctx.font = "28px Arial";
+      const textoDe = "De " + moeda(d.precoDe);
+      ctx.fillText(textoDe, 270, 820);
+      const meia = ctx.measureText(textoDe).width / 2;
+      ctx.strokeStyle = "#bbb";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(270 - meia, 811);
+      ctx.lineTo(270 + meia, 811);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // --- Preço da oferta (cresce com um "pulinho") ---
+    if (t > 3800) {
+      const p = aparecer(t, 3800, 300);
+      ctx.save();
+      ctx.translate(270, 885);
+      ctx.scale(0.6 + 0.4 * p, 0.6 + 0.4 * p);
+      ctx.globalAlpha = p;
+      ctx.fillStyle = tema.preco;
+      ctx.font = "bold 62px Arial";
+      ctx.fillText("Por " + moeda(d.precoPor), 0, 0);
+      ctx.restore();
+    }
+
+    // --- Chamada final ---
+    if (t > FASE_FOTOS) {
+      ctx.fillStyle = tema.destaque;
+      ctx.fillRect(0, 905, 540, 55);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 30px Arial";
+      ctx.fillText("Link no grupo! 👇", 270, 943);
+    }
+  }
+
+  // =====================================================
+  // 5. GRAVAR O VÍDEO (igual aos testes, agora com a animação)
+  // =====================================================
+  function gravarVideo(d, fotos, tema) {
+    return new Promise((resolve) => {
+      const canvas = $("tela");
+      const ctx = canvas.getContext("2d");
+
+      const gravador = new MediaRecorder(canvas.captureStream(30));
+      const pedacos = [];
+
+      gravador.ondataavailable = (e) => { if (e.data.size > 0) pedacos.push(e.data); };
+      gravador.onstop = () => resolve(new Blob(pedacos, { type: "video/webm" }));
+
+      const inicio = performance.now();
+      gravador.start();
+
+      // A cada quadro: calcula o tempo, desenha, atualiza a barra e para quando chegar em 10 s
+      function quadro() {
+        const t = performance.now() - inicio;
+        desenharQuadroVideo(ctx, d, fotos, tema, Math.min(t, DURACAO));
+        $("barra").style.width = (Math.min(t, DURACAO) / DURACAO * 100) + "%";  // NOVO: progresso
+        if (t < DURACAO) requestAnimationFrame(quadro);
+        else gravador.stop();
+      }
+      quadro();
+    });
+  }
+
+  // =====================================================
+  // 6. O CLIQUE ÚNICO: CRIAR ANÚNCIO
+  // =====================================================
+  $("criar").onclick = async () => {
+    const arquivos = Array.from($("fotos").files);
+    const nome = $("nome").value.trim();
+    const precoPor = parseFloat($("precoPor").value);
+    const precoDe = parseFloat($("precoDe").value) || 0;
+
+    // Confere o essencial antes de começar
+    if (!nome || !precoPor || arquivos.length === 0) {
+      $("aviso").textContent = "Preencha o nome, o preço da oferta e escolha pelo menos uma foto.";
+      return;
+    }
+
+    // Calcula o desconto em % (só se o preço original for maior que o da oferta)
+    const desconto = precoDe > precoPor ? Math.round((1 - precoPor / precoDe) * 100) : 0;
+
+    // Junta tudo num objeto "d" que as funções usam
+    const descricao = $("descricao").value.trim();
+    const link = $("link").value.trim();
+    const d = {
+      nome, precoDe, precoPor, desconto, descricao,
+      primeiroDiferencial: descricao.split("\n").find((l) => l.trim()) || "",
+      linhaPreco: precoDe > precoPor
+        ? `❌ De ${moeda(precoDe)}\n✅ Por apenas ${moeda(precoPor)} (${desconto}% OFF)`
+        : `✅ Por apenas ${moeda(precoPor)}`,
+      linhaLink: link ? `👉 Compre aqui: ${link}` : ""
+    };
+
+    $("aviso").textContent = "Criando o anúncio...";
+    $("vazio").hidden = true;          // NOVO: esconde a mensagem inicial
+    $("resultado").hidden = false;
+
+    // NOVO: prepara a área do vídeo (mostra o canvas que grava, esconde a prévia antiga)
+    $("tela").hidden = false;
+    $("previa").hidden = true;
+    $("baixarVideo").hidden = true;
+    $("barra").style.width = "0";
+    $("barraBox").hidden = false;
+    $("textoGravando").hidden = false;
+
+    // Carrega as fotos
+    const fotos = await Promise.all(arquivos.map(carregarImagem));
+
+    // Sorteia modelo e tema, sem repetir os anteriores
+    ultimoModelo = sortearDiferente(MODELOS.length, ultimoModelo);
+    ultimoTema = sortearDiferente(TEMAS.length, ultimoTema);
+    const tema = TEMAS[ultimoTema];
+
+    // (1) Texto  (2) Cartão: ficam prontos na hora
+    $("textoAnuncio").value = MODELOS[ultimoModelo](d);
+    desenharCartao(d, fotos[0], tema);
+
+    // (3) Vídeo: leva 10 segundos para gravar
+    $("aviso").textContent = "Texto e cartão prontos. Você já pode copiar o texto enquanto o vídeo grava.";
+    $("criar").disabled = true;
+
+    const blob = await gravarVideo(d, fotos, tema);
+    const url = URL.createObjectURL(blob);
+
+    // NOVO: troca o canvas pela prévia do vídeo pronto
+    $("tela").hidden = true;
+    $("barraBox").hidden = true;
+    $("textoGravando").hidden = true;
+
+    $("previa").src = url;
+    $("previa").hidden = false;
+    $("baixarVideo").href = url;
+    $("baixarVideo").download = "anuncio.webm";
+    $("baixarVideo").hidden = false;
+
+    $("criar").disabled = false;
+    $("aviso").textContent = "Pronto! Anúncio completo.";
+  };
+
+  // =====================================================
+  // 7. BOTÕES DE APOIO
+  // =====================================================
+  $("copiar").onclick = () => {
+    navigator.clipboard.writeText($("textoAnuncio").value);
+    $("aviso").textContent = "Texto copiado!";
+  };
+
+  $("whats").onclick = () => {
+    window.open("https://wa.me/?text=" + encodeURIComponent($("textoAnuncio").value));
+  };
+
+  $("baixarCartao").onclick = () => {
+    const link = document.createElement("a");
+    link.href = $("cartao").toDataURL("image/png");
+    link.download = "cartao-oferta.png";
+    link.click();
+  };
+
+  // =====================================================
+  // 8. NOVO: MINIATURAS DAS FOTOS ESCOLHIDAS
+  // =====================================================
+  $("fotos").onchange = () => {
+    const arquivos = Array.from($("fotos").files);
+    $("miniaturas").innerHTML = "";               // limpa as miniaturas anteriores
+
+    arquivos.forEach((arquivo) => {
+      const mini = document.createElement("img");
+      mini.src = URL.createObjectURL(arquivo);
+      mini.alt = "Foto escolhida: " + arquivo.name;
+      $("miniaturas").appendChild(mini);
+    });
+
+    $("notaFotos").hidden = arquivos.length === 0; // mostra a dica só se houver fotos
+  };
+</script>
 
 </body>
 </html>
